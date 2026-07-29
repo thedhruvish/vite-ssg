@@ -1,189 +1,206 @@
-Welcome to your new TanStack Start app!
+# SSG with Hydration Guide (Hono + Neon DB + TanStack Query & Router)
 
-# Getting Started
+This project demonstrates **Static Site Generation (SSG) with React Client Hydration** using Vite, TanStack Router, TanStack Query.
 
-To run this application:
+> 📘 **Looking for complete technical architecture details?**  
+> Read the full in-depth breakdown in [`SSG_HYDRATION_GUIDE.md`](./SSG_HYDRATION_GUIDE.md).
 
-```bash
-bun install
-bun --bun run dev
-```
+---
 
-# Building For Production
+## 🌟 Overview & Architecture
 
-To build this application for production:
+- **Backend API (`ssg-api`)**: Powered by **Hono** running on Cloudflare Workers / Wrangler dev server. Connects directly to **Neon PostgreSQL** 
+- **Frontend App**: Built with React 19, Vite, and TailwindCSS.
+- **Routing**: **TanStack Router** managing both static SSG pages and non-SSG client-only SPA routes.
+- **Data Fetching & State Hydration**: **TanStack Query** (`@tanstack/react-query`) fetching data with Axios and dehydrating query state into static HTML during SSG prerendering.
 
-```bash
-bun --bun run build
-```
 
-## Styling
+---
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## ⚙️ How SSG & Hydration is Implemented Step-by-Step
 
-### Removing Tailwind CSS
+### 1. Dedicated Public Route Tree (`src/publicRouteTree.ts`)
+To prevent non-SSG routes (e.g. `/non-ssg`) from being prerendered as full static HTML pages, we create an explicit SSG route tree containing **only** public routes meant for pre-rendering:
 
-If you prefer not to use Tailwind CSS:
+```ts
+import { Route as rootRoute } from './routes/__root'
+import { Route as indexRoute } from './routes/index'
+import { Route as coursesIndexRoute } from './routes/courses/index'
+import { Route as coursesIdRoute } from './routes/courses/$id'
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
+const IndexRoute = indexRoute.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
 
-## Linting & Formatting
+const CoursesIndexRoute = coursesIndexRoute.update({
+  id: '/courses/',
+  path: '/courses/',
+  getParentRoute: () => rootRoute,
+} as any)
 
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
+const CoursesIdRoute = coursesIdRoute.update({
+  id: '/courses/$id',
+  path: '/courses/$id',
+  getParentRoute: () => rootRoute,
+} as any)
 
-```bash
-bun --bun run lint
-bun --bun run format
-bun --bun run check
-```
+const ssgRouteChildren = {
+  IndexRoute,
+  CoursesIndexRoute,
+  CoursesIdRoute,
+}
 
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from '@tanstack/react-router'
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-
-  return <div>Server time: {time}</div>
+export function getPublicRouteTree() {
+  return rootRoute._addFileChildren(ssgRouteChildren as any)
 }
 ```
 
-## API Routes
+---
 
-You can create API routes by using the `server` property in your route definitions:
+### 2. Pre-rendering Script (`scripts/prerender.ts`)
+During `bun run ssg`:
+1. **Reads Clean SPA Shell**: Loads `dist/index.html` produced by `vite build` and saves `cleanSpaShell` containing `<div id="app"></div>`.
+2. **Queries Live Database API**: Fetches course data dynamically from `http://localhost:8787/public/courses` to extract active course IDs (`/courses/:id`).
+3. **Prefetches TanStack Queries**: Executes query options (e.g., `publicCoursesQueryOptions`, `coursesQueryOptions`, `courseDetailQueryOptions`) using a server-side `QueryClient`.
+4. **Dehydrates State**: Calls `dehydrate(queryClient)` to serialize query results into JSON.
+5. **Renders HTML**: Uses `renderToString` with React 19 to generate HTML markup.
+6. **Injects Dehydrated State**: Injects `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(dehydratedState)};</script>` into the `<head>` of each pre-rendered HTML file (`dist/index.html`, `dist/courses/index.html`, `dist/courses/:id/index.html`).
+7. **Clean Non-SSG Fallback**: Writes `cleanSpaShell` (unrendered `<div id="app"></div>`) to `dist/non-ssg/index.html` and `dist/404.html` so non-SSG client pages remain pure SPAs.
 
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
+---
 
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
+### 3. React Client Hydration (`src/main.tsx`)
+On client load:
+1. React detects if `#app` has pre-rendered child DOM nodes using `rootElement.hasChildNodes()`.
+2. If nodes exist, it calls **`ReactDOM.hydrateRoot()`** instead of `render()`.
+3. Wraps the app with `<HydrationBoundary state={window.__REACT_QUERY_STATE__}>`.
+4. TanStack Query immediately populates query cache from `window.__REACT_QUERY_STATE__` — **preventing loading skeletons/spinners from flickering on initial page load**.
 
 ```tsx
-import { createFileRoute } from '@tanstack/react-router'
+import ReactDOM from 'react-dom/client'
+import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { QueryClientProvider, HydrationBoundary } from '@tanstack/react-query'
+import { routeTree } from './routeTree.gen'
+import { queryClient } from './lib/query-client'
 
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
+declare global {
+  interface Window {
+    __REACT_QUERY_STATE__?: unknown
+  }
+}
+
+const router = createRouter({
+  routeTree,
+  defaultPreload: 'intent',
+  scrollRestoration: true,
+  context: { queryClient },
 })
 
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
+const rootElement = document.getElementById('app')!
+
+const appElement = (
+  <QueryClientProvider client={queryClient}>
+    <HydrationBoundary state={typeof window !== 'undefined' ? window.__REACT_QUERY_STATE__ : undefined}>
+      <RouterProvider router={router} />
+    </HydrationBoundary>
+  </QueryClientProvider>
+)
+
+if (rootElement.hasChildNodes()) {
+  ReactDOM.hydrateRoot(rootElement, appElement)
+} else {
+  ReactDOM.createRoot(rootElement).render(appElement)
 }
 ```
 
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
+---
 
-# Learn More
+### 4. Router Independence
+Does SSG + Hydration depend on TanStack Router? **No!**  
+SSG and Hydration rely on standard React primitives (`renderToString`, `dehydrate`, `ReactDOM.hydrateRoot`). You can implement this exact setup with React Router v6/v7 or any router. Read more in [`SSG_HYDRATION_GUIDE.md`](./SSG_HYDRATION_GUIDE.md#--does-ssg--hydration-depend-specifically-on-tanstack-router).
 
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+---
 
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+## 🛠️ Hono API Endpoints (`ssg-api/src/index.ts`)
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/login` | Authenticates user (defaults to `user@example.com`), signs JWT, sets `auth_token` cookie |
+| `POST` | `/logout` | Clears `auth_token` cookie (`Max-Age=0`) |
+| `GET` | `/me` | Verifies JWT cookie, returns `{ email }` or `401 Unauthorized` |
+| `GET` | `/public/courses` | Returns public course list for SSG pre-rendering |
+| `GET` | `/courses` | Returns courses list with dynamic `isPurchased` flag based on auth status |
+| `POST` | `/courses` | Creates a course with `{ title }` (Raw SQL `INSERT INTO courses`) |
+| `DELETE` | `/courses/:id` | Deletes a course by ID |
+| `GET` | `/courses/:id` | Returns single course details and associated lectures |
+| `POST` | `/courses/:id` | Adds a lecture to course with `{ title }` |
+| `DELETE` | `/courses/:id/lectures/:lectureId` | Deletes a lecture by ID |
+
+---
+
+## 🚀 How to Run Locally
+
+### 1. Start the Hono Backend API
+```bash
+cd ssg-api
+bun dev
+# Server running at http://localhost:8787
+```
+
+### 2. Start the Vite Frontend Dev Server
+```bash
+bun dev
+# App running at http://localhost:3000
+```
+
+### 3. Build & Run SSG Prerender
+```bash
+bun run ssg
+# Builds Vite assets & executes scripts/prerender.ts
+```
+
+### 4. Preview SSG Production Dist Output
+```bash
+bun run preview
+# Serves static SSG files from dist/ at http://localhost:4173
+```
+
+---
+
+## ⚔️ Comparison: Custom SSG Script vs. TanStack Start vs. Vike
+
+How does this custom SSG + Hydration setup compare against full-stack meta-framework solutions like **TanStack Start** or **Vike (like vite-plugin-ssr)**?
+
+| Feature | Custom SSG Setup (This Repo) | TanStack Start | Vike (vite-plugin-ssr) |
+| :--- | :--- | :--- | :--- |
+| **Architecture** | Lightweight Vite SPA + Node Prerender script | Full-stack SSR/SSG meta-framework | Flexible SSR/SSG framework for Vite |
+| **Backend Coupling** | **100% Decoupled** (Use Hono, Express, FastAPI, Cloudflare, Go, etc.) | Tied to TanStack Server Functions & Nitro | Flexible, but designed for Node/Vite server integrations |
+| **Prerender Control** | **Total Control** (Explicitly choose which routes get static HTML vs empty SPA shell) | Automated build-time prerendering | Page-by-page `.page.server.js` export config |
+| **Bundle Size & Overhead** | **Lowest** (Zero framework abstraction lock-in) | High (Includes server functions runtime, SSR hydration wrappers) | Medium |
+| **Learning Curve** | Low (Standard React + TanStack Router/Query) | High (New framework APIs, loader conventions) | Medium |
+| **Deployability** | Static CDN (Cloudflare Pages, S3, Netlify) + API Worker | Requires SSR server or static adapter | Requires SSR server or static exporter |
+
+---
+
+## 🏆 Who Wins & Why?
+
+### 👑 The Winner: **Custom SSG Setup (This Architecture)**
+
+#### 🎯 Why This Setup Wins:
+
+1. **Maximum Performance with Zero Lock-in**:
+   - Meta-frameworks like **TanStack Start** and **Vike** add complex server-function abstractions and hidden build magic.
+   - This setup uses **pure Vite** + **standard React 19** + **TanStack Query**. You own 100% of the build process in `scripts/prerender.ts`.
+
+2. **Perfect API Decoupling**:
+   - **TanStack Start** pushes you toward colocated server functions.
+   - This setup keeps your backend (**Hono + Neon DB**) completely independent from your frontend SSG build. Your backend can run anywhere (Cloudflare Workers, Lambda, Bun, Go, etc.) without altering the frontend.
+
+3. **Fine-Grained Route Control (SSG vs. Pure SPA)**:
+   - You can pre-render high-SEO pages (`/`, `/courses`, `/courses/:id`) into static HTML while serving clean, unrendered `<div id="app"></div>` shells for private client routes (`/non-ssg`).
+
+4. **Zero Loading Flickers**:
+   - By serializing `window.__REACT_QUERY_STATE__` directly into static `<head>` scripts during pre-rendering, TanStack Query hydrates the cache instantly without showing skeleton loaders or triggering duplicate initial API calls.
+
