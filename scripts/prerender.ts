@@ -12,12 +12,11 @@ import { QueryClientProvider, dehydrate } from '@tanstack/react-query'
 
 import { getPublicRouteTree } from '../src/publicRouteTree'
 import { queryClient } from '../src/lib/query-client'
-import type {
-  PublicCourse} from '../src/lib/api';
+import type { PublicCourse } from '../src/lib/api'
 import {
   publicCoursesQueryOptions,
   coursesQueryOptions,
-  courseDetailQueryOptions
+  courseDetailQueryOptions,
 } from '../src/lib/api'
 
 interface GlobalWindowPolyfill {

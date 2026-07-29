@@ -67,7 +67,7 @@ app.use('*', async (c, next) => {
     if (token) {
       try {
         const payload = await verify(token, JWT_SECRET, 'HS256')
-        if (payload && typeof payload.email === 'string') {
+        if (typeof payload.email === 'string') {
           c.set('userEmail', payload.email)
         }
       } catch (err) {
