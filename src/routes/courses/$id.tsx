@@ -1,8 +1,20 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { courseDetailQueryOptions, meQueryOptions, axiosClient } from '../../lib/api'
-import { ArrowLeft, Plus, Trash2, CheckCircle, ShoppingBag, BookOpen, Video } from 'lucide-react'
+import {
+  courseDetailQueryOptions,
+  meQueryOptions,
+  axiosClient,
+} from '../../lib/api'
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  CheckCircle,
+  ShoppingBag,
+  BookOpen,
+  Video,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/courses/$id')({
   component: CourseDetailPage,
@@ -17,7 +29,11 @@ function CourseDetailPage() {
   const [showAddLecture, setShowAddLecture] = useState(false)
 
   const { data: user } = useQuery(meQueryOptions)
-  const { data: courseDetail, isLoading, isError } = useQuery(courseDetailQueryOptions(id))
+  const {
+    data: courseDetail,
+    isLoading,
+    isError,
+  } = useQuery(courseDetailQueryOptions(id))
 
   // Create lecture mutation
   const createLectureMutation = useMutation({
@@ -35,7 +51,9 @@ function CourseDetailPage() {
   // Delete lecture mutation
   const deleteLectureMutation = useMutation({
     mutationFn: async (lectureId: number) => {
-      const { data } = await axiosClient.delete(`/courses/${id}/lectures/${lectureId}`)
+      const { data } = await axiosClient.delete(
+        `/courses/${id}/lectures/${lectureId}`,
+      )
       return data
     },
     onSuccess: () => {
@@ -74,7 +92,9 @@ function CourseDetailPage() {
   if (isError || !courseDetail) {
     return (
       <div className="text-center py-12 space-y-4">
-        <p className="text-rose-400 font-medium">Course not found or error loading details.</p>
+        <p className="text-rose-400 font-medium">
+          Course not found or error loading details.
+        </p>
         <Link to="/courses" className="text-indigo-400 text-sm hover:underline">
           &larr; Back to Courses
         </Link>
@@ -103,7 +123,9 @@ function CourseDetailPage() {
             <span className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">
               Course #{course.id}
             </span>
-            <h1 className="text-3xl font-extrabold text-slate-100 mt-2">{course.title}</h1>
+            <h1 className="text-3xl font-extrabold text-slate-100 mt-2">
+              {course.title}
+            </h1>
           </div>
 
           <button
@@ -122,7 +144,10 @@ function CourseDetailPage() {
 
         <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
           <div className="text-sm text-slate-400">
-            Total Lectures: <span className="font-semibold text-slate-200">{lectures.length}</span>
+            Total Lectures:{' '}
+            <span className="font-semibold text-slate-200">
+              {lectures.length}
+            </span>
           </div>
 
           {/* Dynamic Button */}
@@ -133,7 +158,11 @@ function CourseDetailPage() {
             </span>
           ) : (
             <button
-              onClick={() => alert('Please click Login in top header to authenticate and purchase!')}
+              onClick={() =>
+                alert(
+                  'Please click Login in top header to authenticate and purchase!',
+                )
+              }
               className="inline-flex items-center space-x-1.5 text-sm font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 px-4 py-2 rounded-lg transition cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
@@ -161,7 +190,10 @@ function CourseDetailPage() {
 
         {/* Add Lecture Form */}
         {showAddLecture && (
-          <form onSubmit={handleLectureSubmit} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+          <form
+            onSubmit={handleLectureSubmit}
+            className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3"
+          >
             <h3 className="text-sm font-bold text-slate-200">New Lecture</h3>
             <input
               type="text"
@@ -199,8 +231,12 @@ function CourseDetailPage() {
                 className="bg-slate-900/40 border border-slate-800/80 hover:border-slate-700/80 rounded-lg px-4 py-3 flex items-center justify-between transition"
               >
                 <div className="flex items-center space-x-3">
-                  <span className="text-xs font-semibold text-slate-500 w-6">#{idx + 1}</span>
-                  <span className="text-slate-200 text-sm font-medium">{lecture.title}</span>
+                  <span className="text-xs font-semibold text-slate-500 w-6">
+                    #{idx + 1}
+                  </span>
+                  <span className="text-slate-200 text-sm font-medium">
+                    {lecture.title}
+                  </span>
                 </div>
                 <button
                   onClick={() => deleteLectureMutation.mutate(lecture.id)}

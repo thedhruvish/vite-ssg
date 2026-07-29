@@ -1,7 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { publicCoursesQueryOptions } from '../lib/api'
-import { BookOpen, ArrowRight, CheckCircle2, ShieldCheck, Zap } from 'lucide-react'
+import {
+  BookOpen,
+  ArrowRight,
+  CheckCircle2,
+  ShieldCheck,
+  Zap,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/')({ component: Home })
 
@@ -20,7 +26,8 @@ function Home() {
           Master Modern Tech with Interactive Courses
         </h1>
         <p className="text-slate-400 text-lg">
-          Fast static generation combined with reactive TanStack Query hydration powered by Neon PostgreSQL raw queries.
+          Fast static generation combined with reactive TanStack Query hydration
+          powered by Neon PostgreSQL raw queries.
         </p>
         <div className="pt-4 flex items-center justify-center space-x-4">
           <Link
@@ -41,9 +48,17 @@ function Home() {
               <BookOpen className="w-5 h-5 text-indigo-400" />
               <span>Public Course Catalog</span>
             </h2>
-            <p className="text-slate-400 text-sm mt-1">Fetched using <code className="text-indigo-300 bg-slate-800 px-1.5 py-0.5 rounded text-xs">publicCoursesQueryOptions</code></p>
+            <p className="text-slate-400 text-sm mt-1">
+              Fetched using{' '}
+              <code className="text-indigo-300 bg-slate-800 px-1.5 py-0.5 rounded text-xs">
+                publicCoursesQueryOptions
+              </code>
+            </p>
           </div>
-          <Link to="/courses" className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+          <Link
+            to="/courses"
+            className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 flex items-center space-x-1"
+          >
             <span>View All</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
@@ -52,16 +67,26 @@ function Home() {
         {!publicCourses && isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-slate-800/50 animate-pulse rounded-xl border border-slate-800"></div>
+              <div
+                key={i}
+                className="h-32 bg-slate-800/50 animate-pulse rounded-xl border border-slate-800"
+              ></div>
             ))}
           </div>
         ) : publicCourses && publicCourses.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {publicCourses.map((course) => (
-              <div key={course.id} className="bg-slate-800/40 border border-slate-700/60 p-5 rounded-xl flex flex-col justify-between hover:border-indigo-500/50 transition">
+              <div
+                key={course.id}
+                className="bg-slate-800/40 border border-slate-700/60 p-5 rounded-xl flex flex-col justify-between hover:border-indigo-500/50 transition"
+              >
                 <div>
-                  <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Course #{course.id}</span>
-                  <h3 className="font-semibold text-lg text-slate-100 mt-1 line-clamp-2">{course.title}</h3>
+                  <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+                    Course #{course.id}
+                  </span>
+                  <h3 className="font-semibold text-lg text-slate-100 mt-1 line-clamp-2">
+                    {course.title}
+                  </h3>
                 </div>
                 <Link
                   to="/courses/$id"
@@ -75,7 +100,9 @@ function Home() {
             ))}
           </div>
         ) : (
-          <p className="text-slate-500 text-sm text-center py-6">No public courses created yet.</p>
+          <p className="text-slate-500 text-sm text-center py-6">
+            No public courses created yet.
+          </p>
         )}
       </section>
 
@@ -84,17 +111,29 @@ function Home() {
         <div className="bg-slate-900/30 border border-slate-800 p-5 rounded-xl space-y-2">
           <ShieldCheck className="w-6 h-6 text-emerald-400" />
           <h3 className="font-bold text-slate-200">Raw SQL with Neon</h3>
-          <p className="text-slate-400 text-sm">Direct database queries without an ORM using serverless Postgres connection pools.</p>
+          <p className="text-slate-400 text-sm">
+            Direct database queries without an ORM using serverless Postgres
+            connection pools.
+          </p>
         </div>
         <div className="bg-slate-900/30 border border-slate-800 p-5 rounded-xl space-y-2">
           <Zap className="w-6 h-6 text-indigo-400" />
           <h3 className="font-bold text-slate-200">JWT Cookie Auth</h3>
-          <p className="text-slate-400 text-sm">Seamless authorization set in HTTP cookies with <code className="text-indigo-300 bg-slate-800 px-1 py-0.5 rounded text-xs">/me</code> user verification.</p>
+          <p className="text-slate-400 text-sm">
+            Seamless authorization set in HTTP cookies with{' '}
+            <code className="text-indigo-300 bg-slate-800 px-1 py-0.5 rounded text-xs">
+              /me
+            </code>{' '}
+            user verification.
+          </p>
         </div>
         <div className="bg-slate-900/30 border border-slate-800 p-5 rounded-xl space-y-2">
           <CheckCircle2 className="w-6 h-6 text-amber-400" />
           <h3 className="font-bold text-slate-200">Dynamic Hydration</h3>
-          <p className="text-slate-400 text-sm">Instant UI state toggles between "Buy Now" and "Purchased" upon authentication.</p>
+          <p className="text-slate-400 text-sm">
+            Instant UI state toggles between "Buy Now" and "Purchased" upon
+            authentication.
+          </p>
         </div>
       </section>
     </div>

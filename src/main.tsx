@@ -29,7 +29,11 @@ const rootElement = document.getElementById('app')!
 
 const appElement = (
   <QueryClientProvider client={queryClient}>
-    <HydrationBoundary state={typeof window !== 'undefined' ? window.__REACT_QUERY_STATE__ : undefined}>
+    <HydrationBoundary
+      state={
+        typeof window !== 'undefined' ? window.__REACT_QUERY_STATE__ : undefined
+      }
+    >
       <RouterProvider router={router} />
     </HydrationBoundary>
   </QueryClientProvider>

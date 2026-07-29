@@ -63,6 +63,7 @@ function getDb(c: any) {
 ```
 
 #### Key API Routes:
+
 - **`POST /login`**: Accepts `{ email }` (defaults to `user@example.com` if empty). Generates a signed JWT token and sets an HTTP `auth_token` cookie response header (`Set-Cookie`).
 - **`POST /logout`**: Responds with `Set-Cookie: auth_token=; Max-Age=0` to destroy the session.
 - **`GET /me`**: Reads the `Cookie` header, verifies the JWT using `verify(token, JWT_SECRET, 'HS256')`, and returns `{ email }`. Returns `401 Unauthorized` if no valid cookie exists.
@@ -121,54 +122,61 @@ export function getPublicRouteTree() {
 The pre-rendering engine executes post `vite build`:
 
 #### A. Preserving Clean Template Shell:
+
 ```ts
-const templatePath = path.join(distDir, "index.html");
-const htmlTemplate = await fs.readFile(templatePath, "utf-8");
-const cleanSpaShell = htmlTemplate; // Saved unrendered SPA shell with <div id="app"></div>
+const templatePath = path.join(distDir, 'index.html')
+const htmlTemplate = await fs.readFile(templatePath, 'utf-8')
+const cleanSpaShell = htmlTemplate // Saved unrendered SPA shell with <div id="app"></div>
 ```
 
 #### B. Data Prefetching & React Server Rendering:
-For each route in public pages:
-```ts
-queryClient.clear();
-if (page.prefetch) await page.prefetch(); // Prefetches API data into queryCache
 
-memoryHistory.push(page.url);
-await router.load();
+For each route in public pages:
+
+```ts
+queryClient.clear()
+if (page.prefetch) await page.prefetch() // Prefetches API data into queryCache
+
+memoryHistory.push(page.url)
+await router.load()
 
 let renderedContent = renderToString(
   React.createElement(
     QueryClientProvider,
     { client: queryClient },
-    React.createElement(RouterProvider, { router })
-  )
-);
+    React.createElement(RouterProvider, { router }),
+  ),
+)
 ```
 
 #### C. State Dehydration Script Injection:
+
 The server-side query cache is serialized into JSON using TanStack Query's `dehydrate`:
+
 ```ts
-const dehydratedState = dehydrate(queryClient);
+const dehydratedState = dehydrate(queryClient)
 
 const headAdditions = [
   `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(dehydratedState)};</script>`,
-].join("\n");
+].join('\n')
 
 let pageHtml = htmlTemplate
-  .replace("</head>", `${headAdditions}\n</head>`)
-  .replace('<div id="app"></div>', `<div id="app">${renderedContent}</div>`);
+  .replace('</head>', `${headAdditions}\n</head>`)
+  .replace('<div id="app"></div>', `<div id="app">${renderedContent}</div>`)
 
-await fs.writeFile(targetFile, pageHtml, "utf-8");
+await fs.writeFile(targetFile, pageHtml, 'utf-8')
 ```
 
 #### D. Non-SSG & SPA Fallback Clean Shell Generation:
+
 For non-SSG routes (`/non-ssg`), the script outputs unrendered HTML containing **only** `<div id="app"></div>`:
+
 ```ts
-const nonSsgDir = path.join(distDir, "non-ssg");
-await fs.mkdir(nonSsgDir, { recursive: true });
-await fs.writeFile(path.join(nonSsgDir, "index.html"), cleanSpaShell, "utf-8");
-await fs.writeFile(path.join(distDir, "non-ssg.html"), cleanSpaShell, "utf-8");
-await fs.writeFile(path.join(distDir, "404.html"), cleanSpaShell, "utf-8");
+const nonSsgDir = path.join(distDir, 'non-ssg')
+await fs.mkdir(nonSsgDir, { recursive: true })
+await fs.writeFile(path.join(nonSsgDir, 'index.html'), cleanSpaShell, 'utf-8')
+await fs.writeFile(path.join(distDir, 'non-ssg.html'), cleanSpaShell, 'utf-8')
+await fs.writeFile(path.join(distDir, '404.html'), cleanSpaShell, 'utf-8')
 ```
 
 ---
@@ -201,7 +209,11 @@ const rootElement = document.getElementById('app')!
 
 const appElement = (
   <QueryClientProvider client={queryClient}>
-    <HydrationBoundary state={typeof window !== 'undefined' ? window.__REACT_QUERY_STATE__ : undefined}>
+    <HydrationBoundary
+      state={
+        typeof window !== 'undefined' ? window.__REACT_QUERY_STATE__ : undefined
+      }
+    >
       <RouterProvider router={router} />
     </HydrationBoundary>
   </QueryClientProvider>
@@ -246,13 +258,13 @@ function CoursesPage() {
 
 ## 📊 Summary Comparison Matrix
 
-| Aspect | SSG Routes (`/`, `/courses`, `/courses/:id`) | Non-SSG Routes (`/non-ssg`) |
-| :--- | :--- | :--- |
-| **Prerendered File Output** | `dist/courses/index.html` (Full HTML + Dehydrated State) | `dist/non-ssg/index.html` (Unrendered `<div id="app"></div>`) |
-| **Source View (`view-source:`)** | Pre-built markup + `<script>window.__REACT_QUERY_STATE__=...</script>` | Pure empty `<div id="app"></div>` shell |
-| **First Contentful Paint** | **Instant (0ms wait time)** | Client-side render |
-| **React Mounting Mode** | `ReactDOM.hydrateRoot()` | `ReactDOM.createRoot()` |
-| **Loading Skeletons** | **Hidden** (Hydrated state displays immediately) | Visible while client fetches data |
+| Aspect                           | SSG Routes (`/`, `/courses`, `/courses/:id`)                           | Non-SSG Routes (`/non-ssg`)                                   |
+| :------------------------------- | :--------------------------------------------------------------------- | :------------------------------------------------------------ |
+| **Prerendered File Output**      | `dist/courses/index.html` (Full HTML + Dehydrated State)               | `dist/non-ssg/index.html` (Unrendered `<div id="app"></div>`) |
+| **Source View (`view-source:`)** | Pre-built markup + `<script>window.__REACT_QUERY_STATE__=...</script>` | Pure empty `<div id="app"></div>` shell                       |
+| **First Contentful Paint**       | **Instant (0ms wait time)**                                            | Client-side render                                            |
+| **React Mounting Mode**          | `ReactDOM.hydrateRoot()`                                               | `ReactDOM.createRoot()`                                       |
+| **Loading Skeletons**            | **Hidden** (Hydrated state displays immediately)                       | Visible while client fetches data                             |
 
 ---
 
@@ -263,7 +275,9 @@ function CoursesPage() {
 You can implement this exact same SSG + Hydration setup using **React Router (v6 / v7)**, **Wouter**, or any other router.
 
 ### Why Any Router Works:
+
 Static Site Generation and Hydration rely on **3 router-agnostic React primitives**:
+
 1. **Server Rendering (`react-dom/server`)**: React's `renderToString()` renders any component tree to an HTML string.
 2. **State Dehydration (`@tanstack/react-query`)**: `dehydrate(queryClient)` serializes cached API data into JSON.
 3. **Client Hydration (`react-dom/client`)**: `ReactDOM.hydrateRoot()` connects event handlers to existing static HTML nodes.
@@ -273,6 +287,7 @@ Static Site Generation and Hydration rely on **3 router-agnostic React primitive
 If using **React Router v6**, the setup is almost identical:
 
 #### A. Prerender Script (`scripts/prerender.ts` with React Router):
+
 ```tsx
 import { renderToString } from 'react-dom/server'
 import { StaticRouter } from 'react-router-dom/server'
@@ -283,11 +298,12 @@ const renderedContent = renderToString(
     <StaticRouter location={page.url}>
       <AppRoutes />
     </StaticRouter>
-  </QueryClientProvider>
+  </QueryClientProvider>,
 )
 ```
 
 #### B. Client Entry (`src/main.tsx` with React Router):
+
 ```tsx
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -318,12 +334,12 @@ TanStack Router was chosen for this project due to its automatic file-based rout
 
 ## ⚔️ Framework Comparison: Custom SSG vs. TanStack Start vs. Vike
 
-| Feature | Custom SSG Setup (This Project) | TanStack Start | Vike (vite-plugin-ssr) |
-| :--- | :--- | :--- | :--- |
-| **Backend Coupling** | **Decoupled** (Independent Hono / Neon DB API) | Tightly coupled to Server Functions & Nitro | Flexible, but tied to Vite SSR plugin architecture |
-| **Prerender Flexibility** | **Explicit Control** (`getPublicRouteTree()`) | Configuration-driven | Route export hooks |
-| **Framework Overhead** | **Zero** (Pure React 19 + Vite) | High (Full meta-framework runtime) | Medium |
-| **Hydration Control** | `window.__REACT_QUERY_STATE__` direct injection | Framework internal hydration | Extensible plugin hooks |
+| Feature                   | Custom SSG Setup (This Project)                 | TanStack Start                              | Vike (vite-plugin-ssr)                             |
+| :------------------------ | :---------------------------------------------- | :------------------------------------------ | :------------------------------------------------- |
+| **Backend Coupling**      | **Decoupled** (Independent Hono / Neon DB API)  | Tightly coupled to Server Functions & Nitro | Flexible, but tied to Vite SSR plugin architecture |
+| **Prerender Flexibility** | **Explicit Control** (`getPublicRouteTree()`)   | Configuration-driven                        | Route export hooks                                 |
+| **Framework Overhead**    | **Zero** (Pure React 19 + Vite)                 | High (Full meta-framework runtime)          | Medium                                             |
+| **Hydration Control**     | `window.__REACT_QUERY_STATE__` direct injection | Framework internal hydration                | Extensible plugin hooks                            |
 
 ---
 
@@ -332,8 +348,7 @@ TanStack Router was chosen for this project due to its automatic file-based rout
 ### 👑 **Winner: Custom SSG Prerender Setup**
 
 #### **Why it Wins:**
+
 1. **Zero Abstraction Lock-in**: Full ownership of the build output (`scripts/prerender.ts`) without hidden meta-framework bundler magic.
 2. **API Independence**: The backend (Hono + Neon DB) is completely decoupled and can be deployed anywhere independently.
 3. **Instant Hydration**: Dehydrating TanStack Query state directly into static `<head>` scripts prevents loading skeletons on first paint without requiring SSR servers.
-
-

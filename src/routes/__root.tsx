@@ -3,7 +3,14 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { meQueryOptions, axiosClient } from '../lib/api'
-import { LogIn, LogOut, BookOpen, Home, Sparkles, User as UserIcon } from 'lucide-react'
+import {
+  LogIn,
+  LogOut,
+  BookOpen,
+  Home,
+  Sparkles,
+  User as UserIcon,
+} from 'lucide-react'
 import '../styles.css'
 
 export const Route = createRootRoute({
@@ -45,7 +52,10 @@ function RootComponent() {
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-2 text-indigo-400 font-bold text-xl hover:text-indigo-300 transition">
+            <Link
+              to="/"
+              className="flex items-center space-x-2 text-indigo-400 font-bold text-xl hover:text-indigo-300 transition"
+            >
               <Sparkles className="w-6 h-6" />
               <span>EduCourse SSG</span>
             </Link>
@@ -53,7 +63,9 @@ function RootComponent() {
               <Link
                 to="/"
                 activeProps={{ className: 'text-indigo-400 font-semibold' }}
-                inactiveProps={{ className: 'text-slate-300 hover:text-white transition' }}
+                inactiveProps={{
+                  className: 'text-slate-300 hover:text-white transition',
+                }}
                 activeOptions={{ exact: true }}
                 className="flex items-center space-x-1.5"
               >
@@ -63,7 +75,9 @@ function RootComponent() {
               <Link
                 to="/courses"
                 activeProps={{ className: 'text-indigo-400 font-semibold' }}
-                inactiveProps={{ className: 'text-slate-300 hover:text-white transition' }}
+                inactiveProps={{
+                  className: 'text-slate-300 hover:text-white transition',
+                }}
                 className="flex items-center space-x-1.5"
               >
                 <BookOpen className="w-4 h-4" />
@@ -72,7 +86,9 @@ function RootComponent() {
               <Link
                 to="/non-ssg"
                 activeProps={{ className: 'text-indigo-400 font-semibold' }}
-                inactiveProps={{ className: 'text-slate-300 hover:text-white transition' }}
+                inactiveProps={{
+                  className: 'text-slate-300 hover:text-white transition',
+                }}
                 className="flex items-center space-x-1.5"
               >
                 <Sparkles className="w-4 h-4" />
@@ -96,7 +112,9 @@ function RootComponent() {
                   className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3.5 py-1.5 rounded-lg text-sm font-medium flex items-center space-x-1.5 transition cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>{logoutMutation.isPending ? 'Logging out...' : 'Logout'}</span>
+                  <span>
+                    {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+                  </span>
                 </button>
               </div>
             ) : (
@@ -106,7 +124,9 @@ function RootComponent() {
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium flex items-center space-x-1.5 transition shadow-lg shadow-indigo-600/20 cursor-pointer disabled:opacity-50"
               >
                 <LogIn className="w-4 h-4" />
-                <span>{loginMutation.isPending ? 'Logging in...' : 'Login'}</span>
+                <span>
+                  {loginMutation.isPending ? 'Logging in...' : 'Login'}
+                </span>
               </button>
             )}
           </div>
@@ -120,7 +140,10 @@ function RootComponent() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800 py-6 text-center text-slate-500 text-sm">
-        <p>© 2026 EduCourse SSG Hydration Demo. Built with Hono, Neon DB, TanStack Query & Router.</p>
+        <p>
+          © 2026 EduCourse SSG Hydration Demo. Built with Hono, Neon DB,
+          TanStack Query & Router.
+        </p>
       </footer>
 
       {/* TanStack DevTools */}

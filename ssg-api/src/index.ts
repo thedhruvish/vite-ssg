@@ -22,7 +22,7 @@ app.use(
   cors({
     origin: (origin) => origin || '*',
     credentials: true,
-  })
+  }),
 )
 
 // Helper to parse cookies from header
@@ -32,12 +32,16 @@ function parseCookies(header: string | undefined): Record<string, string> {
     header.split(';').map((c) => {
       const [key, ...v] = c.trim().split('=')
       return [key, v.join('=')]
-    })
+    }),
   )
 }
 
 // Helper to serialize cookie
-function serializeCookie(name: string, value: string, options: { maxAge?: number; path?: string } = {}): string {
+function serializeCookie(
+  name: string,
+  value: string,
+  options: { maxAge?: number; path?: string } = {},
+): string {
   let cookieStr = `${name}=${value}`
   if (options.path) cookieStr += `; Path=${options.path}`
   if (options.maxAge !== undefined) cookieStr += `; Max-Age=${options.maxAge}`
@@ -79,12 +83,13 @@ app.use('*', async (c, next) => {
 // POST /login - generates default email if not provided
 app.post('/login', async (c) => {
   const body = await c.req.json().catch(() => ({}))
-  const email = (body.email && typeof body.email === 'string' && body.email.trim())
-    ? body.email.trim()
-    : 'user@example.com'
+  const email =
+    body.email && typeof body.email === 'string' && body.email.trim()
+      ? body.email.trim()
+      : 'user@example.com'
 
   const token = await sign({ email }, JWT_SECRET)
-  
+
   // Set Cookie on response
   const setCookie = serializeCookie(COOKIE_NAME, token, {
     path: '/',
@@ -127,7 +132,7 @@ app.get('/public/courses', async (c) => {
 app.get('/courses', async (c) => {
   const sql = getDb(c)
   const rows = await sql`SELECT id, title FROM courses ORDER BY id DESC`
-  
+
   const userEmail = c.get('userEmail')
   const isPurchased = !!userEmail
 
@@ -150,7 +155,8 @@ app.post('/courses', async (c) => {
     return c.json({ error: 'Title is required' }, 400)
   }
 
-  const result = await sql`INSERT INTO courses (title) VALUES (${title}) RETURNING id, title`
+  const result =
+    await sql`INSERT INTO courses (title) VALUES (${title}) RETURNING id, title`
   return c.json(result[0], 201)
 })
 
@@ -175,7 +181,8 @@ app.get('/courses/:id', async (c) => {
     return c.json({ error: 'Course not found' }, 404)
   }
 
-  const lectures = await sql`SELECT id, title, course_id AS "courseId" FROM lectures WHERE course_id = ${id} ORDER BY id ASC`
+  const lectures =
+    await sql`SELECT id, title, course_id AS "courseId" FROM lectures WHERE course_id = ${id} ORDER BY id ASC`
   const userEmail = c.get('userEmail')
 
   return c.json({
@@ -198,7 +205,8 @@ app.post('/courses/:id', async (c) => {
     return c.json({ error: 'Title is required' }, 400)
   }
 
-  const result = await sql`INSERT INTO lectures (title, course_id) VALUES (${title}, ${id}) RETURNING id, title, course_id AS "courseId"`
+  const result =
+    await sql`INSERT INTO lectures (title, course_id) VALUES (${title}, ${id}) RETURNING id, title, course_id AS "courseId"`
   return c.json(result[0], 201)
 })
 

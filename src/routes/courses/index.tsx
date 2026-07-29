@@ -2,7 +2,14 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { coursesQueryOptions, meQueryOptions, axiosClient } from '../../lib/api'
-import { BookOpen, Plus, Trash2, CheckCircle, ShoppingBag, LogIn } from 'lucide-react'
+import {
+  BookOpen,
+  Plus,
+  Trash2,
+  CheckCircle,
+  ShoppingBag,
+  LogIn,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/courses/')({
   component: CoursesPage,
@@ -56,7 +63,8 @@ function CoursesPage() {
             <span>Course Catalog</span>
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Manage & explore courses. Login status dynamically updates purchase state.
+            Manage & explore courses. Login status dynamically updates purchase
+            state.
           </p>
         </div>
         <button
@@ -70,10 +78,17 @@ function CoursesPage() {
 
       {/* Create Course Form */}
       {isCreating && (
-        <form onSubmit={handleCreateSubmit} className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-lg">
-          <h2 className="text-lg font-bold text-slate-200">Create New Course</h2>
+        <form
+          onSubmit={handleCreateSubmit}
+          className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-lg"
+        >
+          <h2 className="text-lg font-bold text-slate-200">
+            Create New Course
+          </h2>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Course Title</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Course Title
+            </label>
             <input
               type="text"
               required
@@ -106,7 +121,10 @@ function CoursesPage() {
       {!courses && isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-44 bg-slate-900/50 animate-pulse rounded-xl border border-slate-800"></div>
+            <div
+              key={i}
+              className="h-44 bg-slate-900/50 animate-pulse rounded-xl border border-slate-800"
+            ></div>
           ))}
         </div>
       ) : courses && courses.length > 0 ? (
@@ -162,7 +180,9 @@ function CoursesPage() {
                   ) : (
                     <button
                       onClick={() => {
-                        alert('Please click Login in the header to authenticate and purchase!')
+                        alert(
+                          'Please click Login in the header to authenticate and purchase!',
+                        )
                       }}
                       className="inline-flex items-center space-x-1.5 text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 px-3 py-1.5 rounded-lg transition cursor-pointer"
                     >
@@ -178,8 +198,12 @@ function CoursesPage() {
       ) : (
         <div className="text-center py-12 bg-slate-900/30 border border-slate-800 rounded-xl space-y-3">
           <BookOpen className="w-10 h-10 text-slate-600 mx-auto" />
-          <h3 className="text-lg font-medium text-slate-300">No courses available</h3>
-          <p className="text-slate-500 text-sm">Click "Add Course" above to create your first course.</p>
+          <h3 className="text-lg font-medium text-slate-300">
+            No courses available
+          </h3>
+          <p className="text-slate-500 text-sm">
+            Click "Add Course" above to create your first course.
+          </p>
         </div>
       )}
     </div>

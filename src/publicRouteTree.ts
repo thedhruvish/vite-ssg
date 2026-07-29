@@ -1,5 +1,5 @@
-import { routeTree } from "./routeTree.gen";
+import { routeTree } from './routeTree.gen'
 
 export function getPublicRouteTree() {
-  return routeTree;
+  return routeTree
 }
