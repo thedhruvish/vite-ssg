@@ -102,7 +102,7 @@ function RootComponent() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {isLoading ? (
+            {!user && isLoading ? (
               <div className="w-20 h-9 bg-slate-800 animate-pulse rounded-lg"></div>
             ) : user ? (
               <div className="flex items-center space-x-3">

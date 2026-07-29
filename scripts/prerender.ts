@@ -263,11 +263,19 @@ async function runPrerender() {
     count++
   }
 
-  // Generate 404.html fallback and _redirects for Cloudflare Pages & Netlify SPA routing
-  const rootIndexHtml = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
-  await fs.writeFile(path.join(distDir, "404.html"), rootIndexHtml, "utf-8");
-  await fs.writeFile(path.join(distDir, "_redirects"), "/*  /index.html  200\n", "utf-8");
-  console.log(`  ✓ Generated 404.html fallback & _redirects for Cloudflare Pages`);
+  // Generate clean non-ssg route files and SPA shell fallbacks containing ONLY <div id="app"></div>
+  const nonSsgDir = path.join(distDir, 'non-ssg')
+  await fs.mkdir(nonSsgDir, { recursive: true })
+  await fs.writeFile(path.join(nonSsgDir, 'index.html'), cleanSpaShell, 'utf-8')
+  await fs.writeFile(path.join(distDir, 'non-ssg.html'), cleanSpaShell, 'utf-8')
+  
+  // Save clean unrendered SPA shell as app.html and 404.html for SPA rewrites
+  await fs.writeFile(path.join(distDir, 'app.html'), cleanSpaShell, 'utf-8')
+  await fs.writeFile(path.join(distDir, '404.html'), cleanSpaShell, 'utf-8')
+
+  // Cloudflare Pages / Netlify _redirects SPA rewrite pointing to unrendered app.html shell (no redirect loop, pure empty div)
+  await fs.writeFile(path.join(distDir, '_redirects'), '/*  /app.html  200!\n', 'utf-8')
+  console.log(`  ✓ Generated clean unrendered SPA shell (app.html) & _redirects for non-SSG routes`)
 
   console.log(
     `\n🎉 Successfully prerendered ${count} public pages at build time!`,

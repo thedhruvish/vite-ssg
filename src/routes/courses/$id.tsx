@@ -12,7 +12,6 @@ import {
   Trash2,
   CheckCircle,
   ShoppingBag,
-  BookOpen,
   Video,
 } from 'lucide-react'
 
@@ -80,16 +79,16 @@ function CourseDetailPage() {
     createLectureMutation.mutate(lectureTitle.trim())
   }
 
-  if (!courseDetail && isLoading) {
-    return (
-      <div className="space-y-6 py-6 animate-pulse">
-        <div className="h-8 bg-slate-800 rounded w-1/4"></div>
-        <div className="h-40 bg-slate-900 rounded-xl border border-slate-800"></div>
-      </div>
-    )
-  }
+  if (!courseDetail) {
+    if (isLoading) {
+      return (
+        <div className="space-y-6 py-6 animate-pulse">
+          <div className="h-8 bg-slate-800 rounded w-1/4"></div>
+          <div className="h-40 bg-slate-900 rounded-xl border border-slate-800"></div>
+        </div>
+      )
+    }
 
-  if (isError || !courseDetail) {
     return (
       <div className="text-center py-12 space-y-4">
         <p className="text-rose-400 font-medium">
