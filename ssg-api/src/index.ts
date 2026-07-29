@@ -16,7 +16,7 @@ const COOKIE_NAME = 'auth_token'
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
-// Enable CORS with credentials
+// Enable CORS with credentials for cross-domain requests
 app.use(
   '*',
   cors({
@@ -25,7 +25,7 @@ app.use(
   }),
 )
 
-// Helper to parse cookies from header
+// Helper to parse cookies from Cookie header
 function parseCookies(header: string | undefined): Record<string, string> {
   if (!header) return {}
   return Object.fromEntries(
@@ -36,7 +36,7 @@ function parseCookies(header: string | undefined): Record<string, string> {
   )
 }
 
-// Helper to serialize cookie
+// Helper to serialize cookie with SameSite=None & Secure for cross-domain auth
 function serializeCookie(
   name: string,
   value: string,
@@ -45,7 +45,8 @@ function serializeCookie(
   let cookieStr = `${name}=${value}`
   if (options.path) cookieStr += `; Path=${options.path}`
   if (options.maxAge !== undefined) cookieStr += `; Max-Age=${options.maxAge}`
-  cookieStr += '; SameSite=Lax'
+  // SameSite=None; Secure ensures cross-domain cookie sending (Frontend & Backend on different domains)
+  cookieStr += '; SameSite=None; Secure'
   return cookieStr
 }
 
@@ -58,29 +59,42 @@ function getDb(c: any) {
   return neon(dbUrl)
 }
 
-// Auth Middleware
+// Auth Middleware: Check Authorization header FIRST (for cross-domain), fallback to Cookie header
 app.use('*', async (c, next) => {
-  const cookieHeader = c.req.header('Cookie')
-  if (cookieHeader) {
-    const cookies = parseCookies(cookieHeader)
-    const token = cookies[COOKIE_NAME]
-    if (token) {
-      try {
-        const payload = await verify(token, JWT_SECRET, 'HS256')
-        if (typeof payload.email === 'string') {
-          c.set('userEmail', payload.email)
-        }
-      } catch (err) {
-        // Token invalid or expired
-      }
+  let token: string | undefined
+
+  // 1. Check Authorization Bearer Header
+  const authHeader = c.req.header('Authorization')
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7)
+  }
+
+  // 2. Fallback to Cookie header
+  if (!token) {
+    const cookieHeader = c.req.header('Cookie')
+    if (cookieHeader) {
+      const cookies = parseCookies(cookieHeader)
+      token = cookies[COOKIE_NAME]
     }
   }
+
+  if (token) {
+    try {
+      const payload = await verify(token, JWT_SECRET, 'HS256')
+      if (typeof payload.email === 'string') {
+        c.set('userEmail', payload.email)
+      }
+    } catch (err) {
+      // Token invalid or expired
+    }
+  }
+
   await next()
 })
 
 // --- AUTH ROUTERS ---
 
-// POST /login - generates default email if not provided
+// POST /login - returns token in body AND sets Cookie
 app.post('/login', async (c) => {
   const body = await c.req.json().catch(() => ({}))
   const email =
@@ -90,7 +104,7 @@ app.post('/login', async (c) => {
 
   const token = await sign({ email }, JWT_SECRET)
 
-  // Set Cookie on response
+  // Set Cookie on response (SameSite=None; Secure)
   const setCookie = serializeCookie(COOKIE_NAME, token, {
     path: '/',
     maxAge: 60 * 60 * 24 * 7, // 7 days

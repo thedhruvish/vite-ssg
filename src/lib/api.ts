@@ -6,10 +6,35 @@ export const API_BASE_URL =
   process.env.VITE_SERVER_URL ||
   'http://localhost:8787'
 
+const AUTH_TOKEN_KEY = 'auth_token'
+
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
 })
+
+// Attach Bearer token to requests if stored in localStorage (for cross-domain API setups)
+axiosClient.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY)
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+  }
+  return config
+})
+
+// Save/clear token helpers for cross-domain auth
+export function setAuthToken(token: string | null) {
+  if (typeof window !== 'undefined') {
+    if (token) {
+      localStorage.getItem(AUTH_TOKEN_KEY)
+      localStorage.setItem(AUTH_TOKEN_KEY, token)
+    } else {
+      localStorage.removeItem(AUTH_TOKEN_KEY)
+    }
+  }
+}
 
 export interface PublicCourse {
   id: number
@@ -46,6 +71,7 @@ export const meQueryOptions = {
       return data
     } catch (err: any) {
       if (err.response?.status === 401) {
+        setAuthToken(null)
         return null
       }
       throw err

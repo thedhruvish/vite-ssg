@@ -2,7 +2,7 @@ import { Outlet, Link, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { meQueryOptions, axiosClient } from '../lib/api'
+import { meQueryOptions, axiosClient, setAuthToken } from '../lib/api'
 import {
   LogIn,
   LogOut,
@@ -27,7 +27,10 @@ function RootComponent() {
       const { data } = await axiosClient.post('/login', {})
       return data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data?.token) {
+        setAuthToken(data.token)
+      }
       queryClient.invalidateQueries({ queryKey: ['me'] })
       queryClient.invalidateQueries({ queryKey: ['courses'] })
       queryClient.invalidateQueries({ queryKey: ['course'] })
@@ -40,6 +43,7 @@ function RootComponent() {
       return data
     },
     onSuccess: () => {
+      setAuthToken(null)
       queryClient.invalidateQueries({ queryKey: ['me'] })
       queryClient.invalidateQueries({ queryKey: ['courses'] })
       queryClient.invalidateQueries({ queryKey: ['course'] })
