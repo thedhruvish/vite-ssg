@@ -71,7 +71,7 @@ async function runPrerender() {
   // Preserve the clean unrendered SPA shell template for SPA / non-SSG routes
   const cleanSpaShell = htmlTemplate
 
-  const serverUrl = process.env.VITE_SERVER_URL || 'http://localhost:8787'
+  const serverUrl = process.env.VITE_BACKEND_URL || process.env.VITE_SERVER_URL || 'http://localhost:8787'
   const coursesApiUrl = `${serverUrl}/public/courses`
   console.log(`🔍 Fetching course list from API: ${coursesApiUrl}`)
 

@@ -1,6 +1,10 @@
 import axios from 'axios'
 
-export const API_BASE_URL = process.env.VITE_SERVER_URL
+export const API_BASE_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_SERVER_URL)) ||
+  process.env.VITE_BACKEND_URL ||
+  process.env.VITE_SERVER_URL ||
+  'http://localhost:8787'
 
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
