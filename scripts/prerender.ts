@@ -263,53 +263,11 @@ async function runPrerender() {
     count++
   }
 
-  // Generate clean non-ssg route files and SPA shell fallbacks containing ONLY <div id="app"></div>
-  const nonSsgDir = path.join(distDir, 'non-ssg')
-  await fs.mkdir(nonSsgDir, { recursive: true })
-  await fs.writeFile(path.join(nonSsgDir, 'index.html'), cleanSpaShell, 'utf-8')
-  await fs.writeFile(path.join(distDir, 'non-ssg.html'), cleanSpaShell, 'utf-8')
-
-  // Save clean unrendered SPA shell as spa-shell.html for SPA rewrites
-  await fs.writeFile(path.join(distDir, 'spa-shell.html'), cleanSpaShell, 'utf-8')
-  await fs.writeFile(path.join(distDir, '404.html'), cleanSpaShell, 'utf-8')
-
-  // Cloudflare Pages & Netlify _redirects SPA catch-all rule pointing to clean shell
-  await fs.writeFile(
-    path.join(distDir, '_redirects'),
-    '/*    /spa-shell.html    200\n',
-    'utf-8',
-  )
-
-  // Dynamically build Cloudflare Pages _routes.json exclude rules from prerendered SSG pages list
-  const prerenderedPaths = pages.flatMap((p) => {
-    if (p.url === '/') return ['/']
-    const cleanPath = p.url.replace(/\/$/, '')
-    return [cleanPath, `${cleanPath}/*`, `${cleanPath}.html`]
-  })
-  
-  const cfRoutes = {
-    version: 1,
-    include: ['/*'],
-    exclude: [
-      ...Array.from(new Set(prerenderedPaths)),
-      '/assets/*',
-      '/*.css',
-      '/*.js',
-      '/*.ico',
-      '/*.png',
-      '/*.jpg',
-      '/*.svg',
-    ],
-  }
-  await fs.writeFile(
-    path.join(distDir, '_routes.json'),
-    JSON.stringify(cfRoutes, null, 2),
-    'utf-8',
-  )
-
-  console.log(
-    `  ✓ Generated Cloudflare Pages 404.html, _redirects, and _routes.json for Non-SSG client routing`,
-  )
+  // Generate 404.html fallback and _redirects for Cloudflare Pages & Netlify SPA routing
+  const rootIndexHtml = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
+  await fs.writeFile(path.join(distDir, "404.html"), rootIndexHtml, "utf-8");
+  await fs.writeFile(path.join(distDir, "_redirects"), "/*  /index.html  200\n", "utf-8");
+  console.log(`  ✓ Generated 404.html fallback & _redirects for Cloudflare Pages`);
 
   console.log(
     `\n🎉 Successfully prerendered ${count} public pages at build time!`,
