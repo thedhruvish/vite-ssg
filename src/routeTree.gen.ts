@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NonSsgRouteImport } from './routes/non-ssg'
 import { Route as CoursesIndexRouteImport } from './routes/courses/index'
 import { Route as CoursesIdRouteImport } from './routes/courses/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NonSsgRoute = NonSsgRouteImport.update({
+  id: '/non-ssg',
+  path: '/non-ssg',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesIndexRoute = CoursesIndexRouteImport.update({
@@ -31,30 +37,34 @@ const CoursesIdRoute = CoursesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/non-ssg': typeof NonSsgRoute
   '/courses/$id': typeof CoursesIdRoute
   '/courses/': typeof CoursesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/non-ssg': typeof NonSsgRoute
   '/courses/$id': typeof CoursesIdRoute
   '/courses': typeof CoursesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/non-ssg': typeof NonSsgRoute
   '/courses/$id': typeof CoursesIdRoute
   '/courses/': typeof CoursesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/courses/$id' | '/courses/'
+  fullPaths: '/' | '/non-ssg' | '/courses/$id' | '/courses/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/courses/$id' | '/courses'
-  id: '__root__' | '/' | '/courses/$id' | '/courses/'
+  to: '/' | '/non-ssg' | '/courses/$id' | '/courses'
+  id: '__root__' | '/' | '/non-ssg' | '/courses/$id' | '/courses/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  NonSsgRoute: typeof NonSsgRoute
   CoursesIdRoute: typeof CoursesIdRoute
   CoursesIndexRoute: typeof CoursesIndexRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/non-ssg': {
+      id: '/non-ssg'
+      path: '/non-ssg'
+      fullPath: '/non-ssg'
+      preLoaderRoute: typeof NonSsgRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  NonSsgRoute: NonSsgRoute,
   CoursesIdRoute: CoursesIdRoute,
   CoursesIndexRoute: CoursesIndexRoute,
 }

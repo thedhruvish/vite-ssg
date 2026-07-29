@@ -49,7 +49,7 @@ function Home() {
           </Link>
         </div>
 
-        {isLoading ? (
+        {!publicCourses && isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-32 bg-slate-800/50 animate-pulse rounded-xl border border-slate-800"></div>

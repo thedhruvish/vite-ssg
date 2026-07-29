@@ -62,7 +62,7 @@ function CourseDetailPage() {
     createLectureMutation.mutate(lectureTitle.trim())
   }
 
-  if (isLoading) {
+  if (!courseDetail && isLoading) {
     return (
       <div className="space-y-6 py-6 animate-pulse">
         <div className="h-8 bg-slate-800 rounded w-1/4"></div>

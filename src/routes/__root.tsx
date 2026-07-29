@@ -23,6 +23,7 @@ function RootComponent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['me'] })
       queryClient.invalidateQueries({ queryKey: ['courses'] })
+      queryClient.invalidateQueries({ queryKey: ['course'] })
     },
   })
 
@@ -34,6 +35,7 @@ function RootComponent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['me'] })
       queryClient.invalidateQueries({ queryKey: ['courses'] })
+      queryClient.invalidateQueries({ queryKey: ['course'] })
     },
   })
 
@@ -66,6 +68,15 @@ function RootComponent() {
               >
                 <BookOpen className="w-4 h-4" />
                 <span>Courses</span>
+              </Link>
+              <Link
+                to="/non-ssg"
+                activeProps={{ className: 'text-indigo-400 font-semibold' }}
+                inactiveProps={{ className: 'text-slate-300 hover:text-white transition' }}
+                className="flex items-center space-x-1.5"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Non-SSG</span>
               </Link>
             </nav>
           </div>

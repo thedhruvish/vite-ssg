@@ -1,16 +1,14 @@
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider, HydrationBoundary } from '@tanstack/react-query'
 import { routeTree } from './routeTree.gen'
+import { queryClient } from './lib/query-client'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
+declare global {
+  interface Window {
+    __REACT_QUERY_STATE__?: unknown
+  }
+}
 
 const router = createRouter({
   routeTree,
@@ -29,11 +27,16 @@ declare module '@tanstack/react-router' {
 
 const rootElement = document.getElementById('app')!
 
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <QueryClientProvider client={queryClient}>
+const appElement = (
+  <QueryClientProvider client={queryClient}>
+    <HydrationBoundary state={typeof window !== 'undefined' ? window.__REACT_QUERY_STATE__ : undefined}>
       <RouterProvider router={router} />
-    </QueryClientProvider>
-  )
+    </HydrationBoundary>
+  </QueryClientProvider>
+)
+
+if (rootElement.hasChildNodes()) {
+  ReactDOM.hydrateRoot(rootElement, appElement)
+} else {
+  ReactDOM.createRoot(rootElement).render(appElement)
 }

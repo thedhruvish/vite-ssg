@@ -103,7 +103,7 @@ function CoursesPage() {
       )}
 
       {/* Course Cards List */}
-      {isLoading ? (
+      {!courses && isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-44 bg-slate-900/50 animate-pulse rounded-xl border border-slate-800"></div>
