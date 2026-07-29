@@ -88,6 +88,21 @@ async function runPrerender() {
     console.warn(`⚠️ Could not connect to API at ${coursesApiUrl}.`)
   }
 
+  // Fallback to production deployed API if local API dev server is not running during CI/CD build
+  if (apiCourses.length === 0 && !serverUrl.includes('ssg-api.dhruvish.workers.dev')) {
+    const prodCoursesApiUrl = 'https://ssg-api.dhruvish.workers.dev/public/courses'
+    console.log(`🔍 Trying production API fallback: ${prodCoursesApiUrl}`)
+    try {
+      const res = await fetch(prodCoursesApiUrl)
+      if (res.ok) {
+        apiCourses = (await res.json()) as Array<PublicCourse>
+        console.log(`✅ Retrieved ${apiCourses.length} course(s) from production API fallback.`)
+      }
+    } catch (e) {
+      // Fallback failed quietly
+    }
+  }
+
   const pages: PageConfig[] = [
     {
       url: '/',
@@ -170,10 +185,10 @@ async function runPrerender() {
       (router.state.matches || []).map(async (rawMatch) => {
         const match = rawMatch as PreloadableRouteMatch
         const comps = [
-          match?.component,
-          match?.routeComponent,
-          match?.route?.options?.component,
-          match?.route?.options?.lazy,
+          match.component,
+          match.routeComponent,
+          match.route?.options?.component,
+          match.route?.options?.lazy,
         ]
         for (const comp of comps) {
           if (comp && typeof comp.preload === 'function') {
@@ -248,24 +263,29 @@ async function runPrerender() {
     count++
   }
 
-  // Generate clean non-ssg route files, SPA shell fallbacks, and Cloudflare Pages SPA rules containing ONLY <div id="app"></div>
+  // Generate clean non-ssg route files and SPA shell fallbacks containing ONLY <div id="app"></div>
   const nonSsgDir = path.join(distDir, 'non-ssg')
   await fs.mkdir(nonSsgDir, { recursive: true })
   await fs.writeFile(path.join(nonSsgDir, 'index.html'), cleanSpaShell, 'utf-8')
   await fs.writeFile(path.join(distDir, 'non-ssg.html'), cleanSpaShell, 'utf-8')
 
-  // Cloudflare Pages 404 fallback (serves clean unrendered SPA shell for dynamic non-SSG routes)
+  // Save clean unrendered SPA shell as spa-shell.html for SPA rewrites
+  await fs.writeFile(path.join(distDir, 'spa-shell.html'), cleanSpaShell, 'utf-8')
   await fs.writeFile(path.join(distDir, '404.html'), cleanSpaShell, 'utf-8')
 
-  // Netlify / Cloudflare Pages 200 rewrite fallback for non-SSG client routes
+  // Cloudflare Pages & Netlify _redirects SPA catch-all rule pointing to clean shell
   await fs.writeFile(
     path.join(distDir, '_redirects'),
-    '/*    /index.html    200\n',
+    '/*    /spa-shell.html    200\n',
     'utf-8',
   )
 
   // Dynamically build Cloudflare Pages _routes.json exclude rules from prerendered SSG pages list
-  const prerenderedPaths = pages.map((p) => (p.url === '/' ? '/' : p.url.endsWith('/') ? p.url : `${p.url}/*`))
+  const prerenderedPaths = pages.flatMap((p) => {
+    if (p.url === '/') return ['/']
+    const cleanPath = p.url.replace(/\/$/, '')
+    return [cleanPath, `${cleanPath}/*`, `${cleanPath}.html`]
+  })
   
   const cfRoutes = {
     version: 1,
