@@ -15,7 +15,7 @@ export const axiosClient = axios.create({
 
 // Attach Bearer token to requests if stored in localStorage (for cross-domain API setups)
 axiosClient.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     const token = localStorage.getItem(AUTH_TOKEN_KEY)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -26,9 +26,8 @@ axiosClient.interceptors.request.use((config) => {
 
 // Save/clear token helpers for cross-domain auth
 export function setAuthToken(token: string | null) {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     if (token) {
-      localStorage.getItem(AUTH_TOKEN_KEY)
       localStorage.setItem(AUTH_TOKEN_KEY, token)
     } else {
       localStorage.removeItem(AUTH_TOKEN_KEY)

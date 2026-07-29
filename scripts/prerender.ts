@@ -248,20 +248,47 @@ async function runPrerender() {
     count++
   }
 
-  // Generate clean non-ssg route files and 404/redirect fallbacks containing ONLY <div id="app"></div>
+  // Generate clean non-ssg route files, SPA shell fallbacks, and Cloudflare Pages SPA rules containing ONLY <div id="app"></div>
   const nonSsgDir = path.join(distDir, 'non-ssg')
   await fs.mkdir(nonSsgDir, { recursive: true })
   await fs.writeFile(path.join(nonSsgDir, 'index.html'), cleanSpaShell, 'utf-8')
   await fs.writeFile(path.join(distDir, 'non-ssg.html'), cleanSpaShell, 'utf-8')
 
+  // Cloudflare Pages 404 fallback (serves clean unrendered SPA shell for dynamic non-SSG routes)
   await fs.writeFile(path.join(distDir, '404.html'), cleanSpaShell, 'utf-8')
+
+  // Netlify / Cloudflare Pages 200 rewrite fallback for non-SSG client routes
   await fs.writeFile(
     path.join(distDir, '_redirects'),
-    '/*  /index.html  200\n',
+    '/*    /index.html    200\n',
     'utf-8',
   )
+
+  // Dynamically build Cloudflare Pages _routes.json exclude rules from prerendered SSG pages list
+  const prerenderedPaths = pages.map((p) => (p.url === '/' ? '/' : p.url.endsWith('/') ? p.url : `${p.url}/*`))
+  
+  const cfRoutes = {
+    version: 1,
+    include: ['/*'],
+    exclude: [
+      ...Array.from(new Set(prerenderedPaths)),
+      '/assets/*',
+      '/*.css',
+      '/*.js',
+      '/*.ico',
+      '/*.png',
+      '/*.jpg',
+      '/*.svg',
+    ],
+  }
+  await fs.writeFile(
+    path.join(distDir, '_routes.json'),
+    JSON.stringify(cfRoutes, null, 2),
+    'utf-8',
+  )
+
   console.log(
-    `  ✓ Written clean SPA shell with <div id="app"></div> for Non-SSG route & fallback`,
+    `  ✓ Generated Cloudflare Pages 404.html, _redirects, and _routes.json for Non-SSG client routing`,
   )
 
   console.log(
